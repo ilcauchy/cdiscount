@@ -101,4 +101,4 @@ def auto_load_three_sets(path, cutoff):
     return ids, imgs, categories, weights
 if __name__ == '__main__':
     cutoff = 1000
-    ids, imgs, categories, weights = auto_load_three_sets('../input/',cutoff)
+    ids, imgs, categories, weights = auto_load_three_sets('../input/sample_submission',cutoff)
