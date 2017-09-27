@@ -6,8 +6,10 @@ from skimage.data import imread
 import numpy as np
 import io
 
- # note the difference
-def process(q, iolock, all_ids,all_categories,all_imgs,all_weights):
+IMG_WIDTH = 180
+IMG_HEIGHT = 180
+
+def process(q, iolock, all_ids, all_categories, all_imgs, all_weights):
     """
     specify what each worker do in multi processing job
 
@@ -35,7 +37,6 @@ def load_train_data(path,cutoff):
         list of all category_ids, ids, images(binary), weights(1/n_imgs)
     """
     NCORE =  cpu_count()
-    prod_to_category = mp.Manager().dict()
     all_categories = mp.Manager().list()
     all_ids = mp.Manager().list()
     all_imgs = mp.Manager().list()
@@ -73,7 +74,6 @@ def load_train_data(path,cutoff):
 def get_batches(ids, imgs, categories, weights, batch_size):
     """
     :return: generator of batches
-
     """
     n_batches = len(ids)//batch_size
     ids, imgs, categories, weights = ids[:n_batches*batch_size], imgs[:n_batches*batch_size], categories[:n_batches*batch_size], weights[:n_batches*batch_size]
@@ -83,26 +83,19 @@ def get_batches(ids, imgs, categories, weights, batch_size):
 def decode_batch_imgs(imgs,batch_size):
     """
     decode batch of binary images into array
-
     """
     all_images = []
     for e, pic in enumerate(imgs):
         image = imread(io.BytesIO(pic))/256
-        assert(image.shape == (180,180,3))
+        assert(image.shape == (IMG_WIDTH, IMG_HEIGHT, 3))
         all_images.append(image)
     all_images = np.array(all_images)
-    assert(all_images.shape == (batch_size, 180, 180, 3))
+    assert(all_images.shape == (batch_size, IMG_WIDTH, IMG_HEIGHT, 3))
     return all_images
 
 def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
     """
-
-    :param ids: list of all ids
-    :param imgs: list of all images
-    :param categories: list of all category ids
-    :param weights: list of all weights
-    :param test_size: proportion of test set
-    :param val_size: proportion of validation set
+    split train/val/test set
     :return: four dictionaries:
         new_ids: ids of train/val/test
         new_imgs: imgs of train/val/test
@@ -110,15 +103,16 @@ def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
         new_weights: weights of train/val/test
     """
     from sklearn.model_selection import train_test_split
-    remain_ids, test_ids, remain_imgs, test_imgs, remain_categories, test_categories, remain_weights, test_weights =  train_test_split(
-        ids, imgs, categories, weights, test_size = test_size)
+    remain_ids, test_ids, remain_imgs, test_imgs, remain_categories, test_categories, remain_weights, test_weights = train_test_split(
+        ids, imgs, categories, weights, test_size=test_size)
     train_ids, val_ids, train_imgs, val_imgs, train_categories, val_categories, train_weights, val_weights = train_test_split(
         remain_ids, remain_imgs, remain_categories, remain_weights, test_size=val_size/(1-test_size))
-    new_ids = {'train':train_ids, 'val':val_ids, 'test':test_ids}
-    new_imgs = {'train':train_imgs, 'val':val_imgs, 'test':test_imgs}
-    new_categories = {'train':train_categories, 'val':val_categories, 'test':test_categories}
-    new_weights = {'train':train_weights, 'val':val_weights, 'test':test_weights}
+    new_ids = {'train': train_ids, 'val': val_ids, 'test': test_ids}
+    new_imgs = {'train': train_imgs, 'val': val_imgs, 'test': test_imgs}
+    new_categories = {'train': train_categories, 'val': val_categories, 'test': test_categories}
+    new_weights = {'train': train_weights, 'val': val_weights, 'test': test_weights}
     return new_ids, new_imgs, new_categories, new_weights
+
 
 def auto_load_three_sets(path, cutoff):
     """
@@ -140,13 +134,14 @@ def auto_load_three_sets(path, cutoff):
     ids, imgs, categories, weights = get_splitted_data(all_ids, all_imgs, all_categories, all_weights, test_size=0.2, val_size=0.1)
     del all_ids, all_imgs, all_categories, all_weights
 
-    t3=time.time()
+    t3 = time.time()
     print('Train/Val/Test splitted. Took time: '+str(round(t3-t2,3))+'s')
     print('Train set size: '+str(len(ids['train'])))
     print('Val set size: '+str(len(ids['val'])))
     print('Test set size: '+str(len(ids['test'])))
     return ids, imgs, categories, weights
 
+
 if __name__ == '__main__':
     cutoff = 100
-    ids, imgs, categories, weights = auto_load_three_sets('../data/train_example.bson',cutoff)
+    ids, images, categories, weights = auto_load_three_sets('../data/train_example.bson', cutoff)
