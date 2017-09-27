@@ -7,6 +7,10 @@ from multiprocessing import cpu_count
 
  # note the difference
 def process(q, iolock,all_ids,all_categories,all_imgs,all_weights):
+    """
+    specify what each worker do in multi processing job
+
+    """
     i=0
     while True:
         d = q.get()
@@ -24,6 +28,13 @@ def process(q, iolock,all_ids,all_categories,all_imgs,all_weights):
 
 
 def load_train_data(path,cutoff):
+    """
+
+    :param path: path of input dataset
+    :param cutoff: how many lines you gonna read into memory
+    :return:
+        list of all category_ids, ids, images(binary), weights(1/n_imgs)
+    """
     NCORE =  cpu_count()
     prod_to_category = mp.Manager().dict()
     all_categories = mp.Manager().list()
@@ -62,11 +73,19 @@ def load_train_data(path,cutoff):
 
 
 def get_batches(ids, imgs, categories, weights, batch_size):
+    """
+    :return: generator of batches
+
+    """
     n_batches = len(ids)//batch_size
     ids, imgs, categories, weights = ids[:n_batches*batch_size], imgs[:n_batches*batch_size], categories[:n_batches*batch_size], weights[:n_batches*batch_size]
     for ii in range(0, len(ids), batch_size):
         yield ids[ii:ii+batch_size], imgs[ii:ii+batch_size], categories[ii:ii+batch_size], weights[ii:ii+batch_size]
 def decode_batch_imgs(imgs,batch_size):
+    """
+    decode batch of binary images into array
+
+    """
     all_images = []
     for e, pic in enumerate(imgs):
         image = imread(io.BytesIO(pic))/256
@@ -77,6 +96,20 @@ def decode_batch_imgs(imgs,batch_size):
     return all_images
 
 def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
+    """
+
+    :param ids: list of all ids
+    :param imgs: list of all images
+    :param categories: list of all category ids
+    :param weights: list of all weights
+    :param test_size: proportion of test set
+    :param val_size: proportion of validation set
+    :return: four dictionaries:
+        new_ids: ids of train/val/test
+        new_imgs: imgs of train/val/test
+        new_categories: category id of train/val/test
+        new_weights: weights of train/val/test
+    """
     from sklearn.model_selection import train_test_split
     remain_ids, test_ids, remain_imgs, test_imgs, remain_categories, test_categories, remain_weights, test_weights =  train_test_split(
         ids, imgs, categories, weights, test_size = test_size)
@@ -89,6 +122,12 @@ def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
     return new_ids, new_imgs, new_categories, new_weights
 
 def auto_load_three_sets(path, cutoff):
+    """
+    Automatically load train val test set
+    :param path: location of input file
+    :param cutoff: number of lines to read into memory
+    :return: splitted ids, images, category ids, weights by four dictionaries
+    """
     t1 = time.time()
     print('loading data')
     all_categories, all_ids, all_imgs, all_weights = load_train_data(path,cutoff)
