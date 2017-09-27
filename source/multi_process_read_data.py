@@ -169,5 +169,6 @@ def read_category(path):
 
 if __name__ == '__main__':
     cutoff = 100
+    # here, categories is index, 0-5269, can be transform back to id by category_id[index] = id
     ids, images, categories, weights = auto_load_three_sets('../data', cutoff)
     category_index, category_id, category_level1, category_level2, category_level3, category_id2index = read_category('../data')
