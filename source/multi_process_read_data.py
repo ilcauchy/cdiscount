@@ -66,6 +66,15 @@ def get_batches(ids, imgs, categories, weights, batch_size):
     ids, imgs, categories, weights = ids[:n_batches*batch_size], imgs[:n_batches*batch_size], categories[:n_batches*batch_size], weights[:n_batches*batch_size]
     for ii in range(0, len(ids), batch_size):
         yield ids[ii:ii+batch_size], imgs[ii:ii+batch_size], categories[ii:ii+batch_size], weights[ii:ii+batch_size]
+def decode_batch_imgs(imgs,batch_size):
+    all_images = []
+    for e, pic in enumerate(imgs):
+        image = imread(io.BytesIO(pic))/256
+        assert(image.shape == (180,180,3))
+        all_images.append(image)
+    all_images = np.array(all_images)
+    assert(all_images.shape == (batch_size, 180, 180, 3))
+    return all_images
 
 def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
     from sklearn.model_selection import train_test_split

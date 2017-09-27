@@ -8,15 +8,7 @@ import time
 
 
 
-def decode_batch_imgs(imgs,batch_size):
-    all_images = []
-    for e, pic in enumerate(imgs):
-        image = imread(io.BytesIO(pic))/256
-        assert(image.shape == (180,180,3))
-        all_images.append(image)
-    all_images = np.array(all_images)
-    assert(all_images.shape == (batch_size, 180, 180, 3))
-    return all_images
+
 
 
 def build_cnn(batch_size):
