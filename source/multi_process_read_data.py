@@ -30,10 +30,11 @@ def process(q, iolock, all_ids, all_categories, all_imgs, all_weights, category_
             all_weights.append(weight)
 
 
-def load_train_data(path,cutoff):
+def load_train_data(path, cutoff, sample_file=0):
     """
     :param path: path of input dataset
     :param cutoff: how many lines you gonna read into memory
+    :param sample_file: 1 - using sample file
     :return:
         list of all category_ids, ids, images(binary), weights(1/n_imgs)
     """
@@ -50,7 +51,11 @@ def load_train_data(path,cutoff):
     pool = mp.Pool(NCORE, initializer=process, initargs=(q, iolock, all_ids, all_categories, all_imgs, all_weights, id2index))
 
     # process the file
-    data = bson.decode_file_iter(open(path+'/train_example.bson', 'rb'))
+    if sample_file == 0:
+        data = bson.decode_file_iter(open(path+'/train.bson', 'rb'))
+    if sample_file == 1:
+        data = bson.decode_file_iter(open(path+'/train_example.bson', 'rb'))
+
     it=0
     for c, d in enumerate(data):
         if it>=cutoff:
@@ -117,16 +122,17 @@ def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
     return new_ids, new_imgs, new_categories, new_weights
 
 
-def auto_load_three_sets(path, cutoff):
+def auto_load_three_sets(path, cutoff, sample_file=0):
     """
     Automatically load train val test set
     :param path: location of input file
     :param cutoff: number of lines to read into memory
+    :param sample_file: if sample file is 1 read train_sample, otherwise read train
     :return: splitted ids, images, category ids, weights by four dictionaries
     """
     t1 = time.time()
     print('loading data')
-    all_categories, all_ids, all_imgs, all_weights = load_train_data(path,cutoff)
+    all_categories, all_ids, all_imgs, all_weights = load_train_data(path, cutoff, sample_file)
     t2 = time.time()
     n_unique_cat = len(set(all_categories))
     print(str(cutoff)+' lines of data loaded. Took '+str(round(t2-t1,3))+'s to load.')
@@ -170,5 +176,5 @@ def read_category(path):
 if __name__ == '__main__':
     cutoff = 100
     # here, categories is index, 0-5269, can be transform back to id by category_id[index] = id
-    ids, images, categories, weights = auto_load_three_sets('../data', cutoff)
+    ids, images, categories, weights = auto_load_three_sets('../data', cutoff, sample_file=1) #read train_sample
     category_index, category_id, category_level1, category_level2, category_level3, category_id2index = read_category('../data')
