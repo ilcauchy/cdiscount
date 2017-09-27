@@ -9,10 +9,10 @@ import io
 IMG_WIDTH = 180
 IMG_HEIGHT = 180
 
+
 def process(q, iolock, all_ids, all_categories, all_imgs, all_weights):
     """
-    specify what each worker do in multi processing job
-
+    specify what each worker should do in multi processing job
     """
     i=0
     while True:
@@ -28,9 +28,9 @@ def process(q, iolock, all_ids, all_categories, all_imgs, all_weights):
             all_imgs.append(pic['picture'])
             all_weights.append(weight)
 
+
 def load_train_data(path,cutoff):
     """
-
     :param path: path of input dataset
     :param cutoff: how many lines you gonna read into memory
     :return:
@@ -46,9 +46,7 @@ def load_train_data(path,cutoff):
     iolock = mp.Lock()
     pool = mp.Pool(NCORE, initializer=process, initargs=(q, iolock, all_ids, all_categories, all_imgs, all_weights))
 
-
     # process the file
-
     data = bson.decode_file_iter(open(path, 'rb'))
     it=0
     for c, d in enumerate(data):
@@ -58,7 +56,6 @@ def load_train_data(path,cutoff):
         it=it+1
 
     # tell workers we're done
-
     for _ in range(NCORE):
         q.put(None)
     pool.close()
@@ -71,6 +68,7 @@ def load_train_data(path,cutoff):
     all_weights = list(all_weights)
     return all_categories,all_ids,all_imgs,all_weights
 
+
 def get_batches(ids, imgs, categories, weights, batch_size):
     """
     :return: generator of batches
@@ -79,6 +77,7 @@ def get_batches(ids, imgs, categories, weights, batch_size):
     ids, imgs, categories, weights = ids[:n_batches*batch_size], imgs[:n_batches*batch_size], categories[:n_batches*batch_size], weights[:n_batches*batch_size]
     for ii in range(0, len(ids), batch_size):
         yield ids[ii:ii+batch_size], imgs[ii:ii+batch_size], categories[ii:ii+batch_size], weights[ii:ii+batch_size]
+
 
 def decode_batch_imgs(imgs,batch_size):
     """
@@ -92,6 +91,7 @@ def decode_batch_imgs(imgs,batch_size):
     all_images = np.array(all_images)
     assert(all_images.shape == (batch_size, IMG_WIDTH, IMG_HEIGHT, 3))
     return all_images
+
 
 def get_splitted_data(ids, imgs, categories, weights, test_size, val_size):
     """
