@@ -2,11 +2,12 @@ import bson                       # this is installed with the pymongo package
 import multiprocessing as mp      # will come in handy due to the size of the data
 import time
 from multiprocessing import cpu_count
-
-
+from skimage.data import imread
+import numpy as np
+import io
 
  # note the difference
-def process(q, iolock,all_ids,all_categories,all_imgs,all_weights):
+def process(q, iolock, all_ids,all_categories,all_imgs,all_weights):
     """
     specify what each worker do in multi processing job
 
@@ -24,8 +25,6 @@ def process(q, iolock,all_ids,all_categories,all_imgs,all_weights):
             all_categories.append(category_id)
             all_imgs.append(pic['picture'])
             all_weights.append(weight)
-
-
 
 def load_train_data(path,cutoff):
     """
@@ -71,7 +70,6 @@ def load_train_data(path,cutoff):
     all_weights = list(all_weights)
     return all_categories,all_ids,all_imgs,all_weights
 
-
 def get_batches(ids, imgs, categories, weights, batch_size):
     """
     :return: generator of batches
@@ -81,6 +79,7 @@ def get_batches(ids, imgs, categories, weights, batch_size):
     ids, imgs, categories, weights = ids[:n_batches*batch_size], imgs[:n_batches*batch_size], categories[:n_batches*batch_size], weights[:n_batches*batch_size]
     for ii in range(0, len(ids), batch_size):
         yield ids[ii:ii+batch_size], imgs[ii:ii+batch_size], categories[ii:ii+batch_size], weights[ii:ii+batch_size]
+
 def decode_batch_imgs(imgs,batch_size):
     """
     decode batch of binary images into array
@@ -147,6 +146,7 @@ def auto_load_three_sets(path, cutoff):
     print('Val set size: '+str(len(ids['val'])))
     print('Test set size: '+str(len(ids['test'])))
     return ids, imgs, categories, weights
+
 if __name__ == '__main__':
-    cutoff = 1000
-    ids, imgs, categories, weights = auto_load_three_sets('../input/sample_submission.bson',cutoff)
+    cutoff = 100
+    ids, imgs, categories, weights = auto_load_three_sets('../data/train_example.bson',cutoff)

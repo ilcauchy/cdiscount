@@ -1,14 +1,6 @@
-from skimage.data import imread
-import numpy as np
-import io
 import tensorflow as tf
-from multi_process_read_data import auto_load_three_sets
-from multi_process_read_data import get_batches
 import time
-
-
-
-
+from multi_process_read_data import *
 
 
 def build_cnn(batch_size):
@@ -45,7 +37,7 @@ def _variable_with_weight_decay(name, shape, stddev, wd):
   return var
 
 if __name__ == '__main__':
-    path = 'F:/train.bson'
+    path = '../data/train.bson'
     ids, imgs, cats, ws, = auto_load_three_sets(path,10)
     t1 = time.time()
     for it,(id,x,y,w) in enumerate(get_batches(ids['train'], imgs['train'], cats['train'], ws['train'], batch_size=2)):
