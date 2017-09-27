@@ -10,7 +10,7 @@ IMG_WIDTH = 180
 IMG_HEIGHT = 180
 
 
-def process(q, iolock, all_ids, all_categories, all_imgs, all_weights):
+def process(q, iolock, all_ids, all_categories, all_imgs, all_weights, category_id2index):
     """
     specify what each worker should do in multi processing job
     """
@@ -21,10 +21,11 @@ def process(q, iolock, all_ids, all_categories, all_imgs, all_weights):
             break
         product_id = d['_id']
         category_id = d['category_id']
+        category_index = category_id2index[str(category_id)]
         weight = 1/len(d['imgs'])
         for e, pic in enumerate(d['imgs']):
             all_ids.append(product_id)
-            all_categories.append(category_id)
+            all_categories.append(category_index)
             all_imgs.append(pic['picture'])
             all_weights.append(weight)
 
@@ -44,10 +45,12 @@ def load_train_data(path,cutoff):
 
     q = mp.Queue(maxsize=NCORE)
     iolock = mp.Lock()
-    pool = mp.Pool(NCORE, initializer=process, initargs=(q, iolock, all_ids, all_categories, all_imgs, all_weights))
+
+    _, _, _, _, _, id2index = read_category(path)
+    pool = mp.Pool(NCORE, initializer=process, initargs=(q, iolock, all_ids, all_categories, all_imgs, all_weights, id2index))
 
     # process the file
-    data = bson.decode_file_iter(open(path, 'rb'))
+    data = bson.decode_file_iter(open(path+'/train_example.bson', 'rb'))
     it=0
     for c, d in enumerate(data):
         if it>=cutoff:
@@ -142,6 +145,29 @@ def auto_load_three_sets(path, cutoff):
     return ids, imgs, categories, weights
 
 
+def read_category(path):
+    category_index = []
+    category_id = []
+    category_level1 = []
+    category_level2 = []
+    category_level3 = []
+    category_id2index = {}
+
+    with open(path+'/category_names.csv','r') as f:
+        i = 0
+        header = f.readline()
+        for line in f.readlines():
+            l = line.strip().split(',')
+            category_index.append(i)
+            category_id.append(l[0])
+            category_level1.append(l[1])
+            category_level2.append(l[2])
+            category_level3.append(l[3])
+            category_id2index[str(l[0])]=i
+            i = i+1
+    return category_index, category_id, category_level1, category_level2, category_level3, category_id2index
+
 if __name__ == '__main__':
     cutoff = 100
-    ids, images, categories, weights = auto_load_three_sets('../data/train_example.bson', cutoff)
+    ids, images, categories, weights = auto_load_three_sets('../data', cutoff)
+    category_index, category_id, category_level1, category_level2, category_level3, category_id2index = read_category('../data')
